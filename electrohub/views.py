@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from rest_framework import viewsets, filters, status
 from rest_framework.exceptions import ValidationError
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from electrohub.models import Company, Product, Contacts
@@ -20,14 +20,13 @@ class CompanyViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ["type", "name", "supplier", "level", "date_created"]
-    # permission_classes = [AllowAny, ]
 
     def get_permissions(self):
         if self.request.user.is_staff or not self.request.user.is_active:
             self.permission_classes = [IsAdminUser]
         elif self.request.user.is_active:
             if self.action in ["update", "retrieve", "create", "destroy"]:
-                self.permission_classes = [IsUserModerator, IsUserOwner]
+                self.permission_classes = [IsUserModerator | IsUserOwner]
             elif self.action == "list":
                 self.permission_classes = [IsAuthenticatedOrReadOnly]
         return super().get_permissions()
@@ -56,12 +55,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ["product_name", "product_model", "product_date"]
-    # permission_classes = [AllowAny, ]
 
     def get_permissions(self):
         if self.request.user.is_active:
             if self.action in ["update", "retrieve", "create", "destroy"]:
-                self.permission_classes = (IsUserModerator, IsUserOwner, IsAdminUser,)
+                self.permission_classes = (IsUserModerator | IsUserOwner | IsAdminUser)
             elif self.action == "list":
                 self.permission_classes = (IsAuthenticatedOrReadOnly,)
         return super().get_permissions()
@@ -91,10 +89,9 @@ class ContactsViewSet(viewsets.ModelViewSet):
     pagination_class = Pagination
     filter_backends = [filters.SearchFilter]
     search_fields = ["country"]
-    # permission_classes = [AllowAny, ]
 
     def get_permissions(self):
         if self.request.user.is_active:
             if self.action:
-                self.permission_classes = (IsUserModerator, IsUserOwner, IsAdminUser,)
+                self.permission_classes = (IsUserModerator | IsUserOwner | IsAdminUser)
         return super().get_permissions()
